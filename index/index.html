@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kit Online de Desvinculación Laboral</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            e: {
+              black:  '#000000', dark:   '#252525', silver: '#c0c0c0',
+              white:  '#ffffff', cream:  '#faf1f1', navy:   '#020f27',
+              blue:   '#0b4a6e', cyan:   '#22d9df', bright: '#1effff',
+              olive:  '#6b9432', lime:   '#c1ff72',
+            }
+          },
+          fontFamily: {
+            sans:    ['Outfit', 'system-ui', 'sans-serif'],
+            display: ['Syne', 'sans-serif'],
+            ui:      ['"Exo 2"', 'sans-serif'],
+          },
+          boxShadow: {
+            card:  '0 1px 3px rgba(0,0,0,0.06), 0 6px 20px rgba(0,0,0,0.06)',
+            cyan:  '0 4px 24px rgba(34,217,223,0.2)',
+          },
+          borderRadius: { '4xl':'2rem' }
+        }
+      }
+    }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Syne:wght@700;800&family=Exo+2:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <style>
+    :root {
+      --black:  #000000; --dark:   #252525; --silver: #c0c0c0;
+      --white:  #ffffff; --cream:  #faf1f1; --navy:   #020f27;
+      --blue:   #0b4a6e; --cyan:   #22d9df; --bright: #1effff;
+      --olive:  #6b9432; --lime:   #c1ff72;
+    }
+    *{box-sizing:border-box;}
+    body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--black);}
+    h1,h2,h3,h4{font-family:'Syne',sans-serif;}
+
+    /* Accent line */
+    .accent-line{height:3px;background:linear-gradient(90deg,var(--cyan) 0%,var(--bright) 50%,var(--lime) 100%);}
+
+    /* Inputs */
+    input,textarea,select{transition:border-color .15s,box-shadow .15s;font-family:'Outfit',sans-serif;}
+    input:focus,textarea:focus,select:focus{outline:none;border-color:var(--cyan)!important;box-shadow:0 0 0 3px rgba(34,217,223,.2);}
+
+    /* Tabs */
+    .tab-btn{transition:all .15s ease;}
+    .tab-btn:hover:not(.active-tab){background:#f0f4f8;}
+    .tab-btn.active-tab{background:var(--navy);color:var(--cyan);}
+
+    /* Case cards */
+    .case-card{transition:all .2s ease;cursor:pointer;}
+    .case-card:hover{border-color:var(--cyan)!important;box-shadow:0 6px 24px rgba(34,217,223,.18);transform:translateY(-2px);}
+    .case-card.selected{border-color:var(--cyan)!important;background:#f0fcfd;box-shadow:0 6px 24px rgba(34,217,223,.2);}
+    .case-card.selected .case-icon{background:var(--cyan);color:var(--navy);}
+
+    /* Buttons */
+    .btn-navy{background:var(--navy);color:var(--cyan);transition:all .15s;}
+    .btn-navy:hover{background:var(--blue);transform:translateY(-1px);}
+    .btn-cyan{background:var(--cyan);color:var(--navy);font-weight:700;transition:all .15s;}
+    .btn-cyan:hover{background:var(--bright);transform:translateY(-1px);}
+    .btn-lime{background:var(--lime);color:var(--navy);font-weight:700;transition:all .15s;box-shadow:0 2px 12px rgba(193,255,114,.3);}
+    .btn-lime:hover{background:#b0f055;transform:translateY(-1px);}
+    .btn-ghost{background:transparent;color:var(--dark);border:1.5px solid var(--silver);transition:all .15s;}
+    .btn-ghost:hover{background:#f0f4f8;border-color:var(--blue);}
+    .btn-danger{background:transparent;color:#dc2626;border:1.5px solid #fca5a5;transition:all .15s;}
+    .btn-danger:hover{background:#fef2f2;}
+
+    /* Risk dots */
+    .risk-dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex-shrink:0;margin-top:3px;}
+    .dot-bajo   {background:#22C55E;box-shadow:0 0 7px rgba(34,197,94,.5);}
+    .dot-medio  {background:#EAB308;box-shadow:0 0 7px rgba(234,179,8,.5);}
+    .dot-alto   {background:#F97316;box-shadow:0 0 7px rgba(249,115,22,.5);}
+    .dot-critico{background:#EF4444;box-shadow:0 0 7px rgba(239,68,68,.5);}
+
+    /* Bars */
+    .score-track{height:6px;background:#e0e0e0;border-radius:3px;overflow:hidden;}
+    .score-fill {height:100%;border-radius:3px;background:linear-gradient(90deg,#22C55E,#EAB308,#F97316,#EF4444);transition:width .5s ease;}
+    .progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--cyan),var(--bright));transition:width .4s ease;}
+
+    /* Section badge */
+    .section-badge{display:inline-flex;align-items:center;background:var(--navy);color:var(--lime);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:9999px;padding:3px 10px;}
+
+    /* Manual button */
+    .manual-btn{background:var(--cyan);color:var(--navy);font-weight:700;transition:all .2s;box-shadow:0 2px 12px rgba(34,217,223,.25);}
+    .manual-btn:hover{background:var(--bright);transform:translateY(-1px);}
+
+    /* Eco table */
+    .eco-table tr:nth-child(even){background:#f5f9fa;}
+    .eco-table tr.total-row{background:var(--navy)!important;}
+    .eco-table tr.total-row td{font-weight:700;color:var(--cyan)!important;}
+    .eco-table td{padding:9px 14px;font-size:13.5px;border-bottom:1px solid #e8edf0;}
+
+    /* Params table */
+    .param-card{transition:border-color .15s;}
+    .param-card:focus-within{border-color:var(--cyan)!important;}
+
+    /* Scrollbar */
+    ::-webkit-scrollbar{width:5px;height:5px;}
+    ::-webkit-scrollbar-track{background:#f0f4f8;}
+    ::-webkit-scrollbar-thumb{background:var(--silver);border-radius:3px;}
+
+    input[type="checkbox"]{accent-color:var(--navy);cursor:pointer;}
+    .card-hover{transition:box-shadow .2s,transform .2s;}
+    .card-hover:hover{box-shadow:0 8px 32px rgba(0,0,0,.09);transform:translateY(-1px);}
+
+    /* Cache badge */
+    #cacheBadge{display:none;}
+    #cacheBadge.visible{display:flex;}
+  </style>
+</head>
+
+<body class="bg-e-cream text-e-black">
+
+<!-- HEADER -->
+<header class="bg-e-navy">
+  <div class="max-w-screen-xl mx-auto px-5 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="flex items-center gap-5">
+      <img src="img/escencial-logoblanco.png" alt="ONE" class="h-12 w-auto" onerror="this.src='img/one-logonegro.png';this.onerror=null;">
+      <div class="w-px h-10 bg-e-blue hidden md:block"></div>
+      <div>
+        <p class="text-e-silver text-xs font-ui uppercase tracking-widest">Herramienta de capacitación</p>
+        <h1 class="font-display text-white text-xl font-bold leading-tight">Kit Online de Desvinculación Laboral</h1>
+      </div>
+    </div>
+    <p class="text-e-silver text-xs leading-5 text-right hidden md:block">Diagnóstico · Documentación · Estimación<br>Alertas · Estrategia · Informe</p>
+  </div>
+  <div class="accent-line"></div>
+</header>
+
+<!-- MAIN -->
+<main class="max-w-screen-xl mx-auto px-4 md:px-6 py-6">
+  <div class="flex flex-col xl:flex-row gap-6 items-start">
+
+    <!-- SIDEBAR -->
+    <aside class="xl:w-72 flex-shrink-0 xl:sticky xl:top-4">
+      <div class="bg-e-white border border-e-silver rounded-4xl shadow-card overflow-hidden">
+
+        <!-- Progress -->
+        <div class="px-5 pt-5 pb-4 border-b border-e-silver">
+          <div class="flex items-center justify-between mb-2">
+            <p class="text-xs text-e-dark font-ui uppercase tracking-wider">Progreso del caso</p>
+            <p id="progressPct" class="text-xs font-bold" style="color:var(--cyan)">0%</p>
+          </div>
+          <div class="h-2 bg-e-silver rounded-full overflow-hidden"><div id="progressBar" class="progress-fill" style="width:0%"></div></div>
+          <p id="progressLabel" class="text-xs text-e-dark mt-1.5">Sin caso seleccionado</p>
+        </div>
+
+        <!-- Nav -->
+        <nav class="p-3 space-y-1">
+          <button data-tab="inicio"        class="tab-btn active-tab w-full text-left px-4 py-3 rounded-2xl flex items-center gap-3"><span class="text-base">🎯</span><span class="text-sm font-medium">1. Tipo de caso</span></button>
+          <button data-tab="diagnostico"   class="tab-btn w-full text-left px-4 py-3 rounded-2xl flex items-center gap-3"><span class="text-base">🔍</span><span class="text-sm font-medium">2. Diagnóstico</span></button>
+          <button data-tab="ruta"          class="tab-btn w-full text-left px-4 py-3 rounded-2xl flex items-center gap-3"><span class="text-base">🗺️</span><span class="text-sm font-medium">3. Ruta sugerida</span></button>
+          <button data-tab="documentacion" class="tab-btn w-full text-left px-4 py-3 rounded-2xl flex items-center gap-3"><span class="text-base">📋</span><span class="text-sm font-medium">4. Documentación</span></button>
+          <button data-tab="economico"     class="tab-btn w-full text-left px-4 py-3 rounded-2xl flex items-center gap-3"><span class="text-base">💰</span><span class="text-sm font-medium">5. Est. económica</span></button>
+          <button data-tab="riesgo"        class="tab-btn w-full text-left px-4 py-3 rounded-2xl flex items-center gap-3"><span class="text-base">🚦</span><span class="text-sm font-medium">6. Semáforo de riesgo</span></button>
+          <button data-tab="estrategia"    class="tab-btn w-full text-left px-4 py-3 rounded-2xl flex items-center gap-3"><span class="text-base">💡</span><span class="text-sm font-medium">7. Estrategia</span></button>
+          <button data-tab="informe"       class="tab-btn w-full text-left px-4 py-3 rounded-2xl flex items-center gap-3"><span class="text-base">📄</span><span class="text-sm font-medium">8. Informe final</span></button>
+          <div class="border-t border-e-silver my-1 pt-1">
+            <button data-tab="parametros"  class="tab-btn w-full text-left px-4 py-3 rounded-2xl flex items-center gap-3"><span class="text-base">⚙️</span><span class="text-sm font-medium">Parámetros</span></button>
+          </div>
+        </nav>
+
+        <!-- Caso activo -->
+        <div class="px-5 py-3 border-t border-e-silver bg-e-cream">
+          <p class="text-xs uppercase tracking-wide" style="color:var(--silver)">Caso activo</p>
+          <p id="sidebarCaseBadge" class="text-sm font-semibold mt-0.5">Sin definir</p>
+        </div>
+
+        <!-- Cache badge -->
+        <div id="cacheBadge" class="mx-4 mb-2 hidden items-center gap-2 px-3 py-2 rounded-xl bg-e-blue text-white text-xs font-medium">
+          <svg class="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"/></svg>
+          Parámetros guardados localmente
+        </div>
+
+        <!-- Manual download -->
+        <div class="p-4 border-t border-e-silver">
+          <a href="download/manualdeuso.pdf" download class="manual-btn flex items-center justify-center gap-2 w-full px-4 py-3 rounded-2xl text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Descargar manual de uso
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <section class="flex-1 min-w-0 space-y-6">
+
+      <!-- TAB 1 -->
+      <div id="tab-inicio" class="tab-panel">
+        <div class="bg-e-white border border-e-silver rounded-4xl shadow-card p-6">
+          <span class="section-badge">Paso 1</span>
+          <h2 class="font-display text-2xl font-bold mt-3">Seleccioná el tipo de caso</h2>
+          <p class="text-e-dark text-sm mt-2">La herramienta adapta preguntas, documentación, rubros y alertas según el tipo de desvinculación elegido.</p>
+          <div id="caseCards" class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-6"></div>
+        </div>
+      </div>
+
+      <!-- TAB 2 -->
+      <div id="tab-diagnostico" class="tab-panel hidden">
+        <div class="bg-e-white border border-e-silver rounded-4xl shadow-card p-6">
+          <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+            <div>
+              <span class="section-badge">Paso 2</span>
+              <h2 class="font-display text-2xl font-bold mt-3">Diagnóstico inicial del caso</h2>
+              <p class="text-e-dark text-sm mt-1">Ordená el contexto antes de definir la ruta de trabajo.</p>
+            </div>
+            <div class="rounded-2xl border border-e-silver bg-e-cream px-4 py-3 flex-shrink-0">
+              <p class="text-xs uppercase tracking-wide" style="color:var(--silver)">Tipo seleccionado</p>
+              <p id="selectedCaseBadge" class="font-semibold mt-1 text-sm">No definido</p>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <label class="space-y-1.5"><span class="text-sm font-medium">Nombre del caso</span><input id="dNombre" class="w-full rounded-2xl border border-e-silver bg-e-cream px-4 py-3 text-sm" placeholder="Ej.: Laura Benítez"/></label>
+            <label class="space-y-1.5"><span class="text-sm font-medium">Empresa / cliente</span><input id="dEmpresa" class="w-full rounded-2xl border border-e-silver bg-e-cream px-4 py-3 text-sm" placeholder="Ej.: Cliente X"/></label>
+            <label class="space-y-1.5"><span class="text-sm font-medium">Convenio / referencia</span><input id="dConvenio" class="w-full rounded-2xl border border-e-silver bg-e-cream px-4 py-3 text-sm" placeholder="Ej.: Comercio / fuera de convenio"/></label>
+            <label class="space-y-1.5"><span class="text-sm font-medium">Puesto / categoría</span><input id="dPuesto" class="w-full rounded-2xl border border-e-silver bg-e-cream px-4 py-3 text-sm" placeholder="Ej.: Administrativo A"/></label>
+            <label class="space-y-1.5"><span class="text-sm font-medium">Fecha de ingreso</span><input id="dIngreso" type="date" class="w-full rounded-2xl border border-e-silver bg-e-cream px-4 py-3 text-sm"/></label>
+            <label class="space-y-1.5"><span class="text-sm font-medium">Fecha de egreso o estimada</span><input id="dEgreso" type="date" class="w-full rounded-2xl border border-e-silver bg-e-cream px-4 py-3 text-sm"/></label>
+          </div>
+          <div class="mt-6">
+            <p class="text-sm font-semibold mb-3">Variables del caso</p>
+            <div id="diagnosticChecks" class="grid md:grid-cols-2 gap-3"></div>
+          </div>
+          <label class="block mt-5 space-y-1.5">
+            <span class="text-sm font-medium">Observaciones del caso</span>
+            <textarea id="dObs" rows="4" class="w-full rounded-2xl border border-e-silver bg-e-cream px-4 py-3 text-sm resize-none" placeholder="Describí los hechos, antecedentes, dudas o puntos sensibles del caso."></textarea>
+          </label>
+          <div class="flex flex-wrap gap-3 mt-5">
+            <button id="btnEvaluarDiagnostico" class="btn-navy rounded-2xl px-5 py-3 text-sm font-semibold flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              Evaluar diagnóstico
+            </button>
+          </div>
+          <div class="grid md:grid-cols-2 gap-4 mt-6">
+            <div class="rounded-3xl border border-e-silver bg-e-cream p-5">
+              <p class="text-xs uppercase tracking-wider font-ui" style="color:var(--silver)">Lectura preliminar</p>
+              <p id="diagNivel" class="font-display text-2xl font-bold mt-2">Pendiente</p>
+              <div class="mt-3 score-track"><div id="diagScoreBar" class="score-fill" style="width:0%"></div></div>
+              <p id="diagTexto" class="text-sm text-e-dark mt-3 leading-6">Completá el diagnóstico para obtener una lectura inicial del caso.</p>
+            </div>
+            <div class="rounded-3xl border border-e-silver bg-e-cream p-5">
+              <p class="text-xs uppercase tracking-wider font-ui" style="color:var(--silver)">Variables detectadas</p>
+              <ul id="diagVariables" class="mt-3 space-y-2 text-sm text-e-dark"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3 -->
+      <div id="tab-ruta" class="tab-panel hidden">
+        <div class="bg-e-white border border-e-silver rounded-4xl shadow-card p-6">
+          <span class="section-badge">Paso 3</span>
+          <h2 class="font-display text-2xl font-bold mt-3">Ruta sugerida del caso</h2>
+          <p class="text-e-dark text-sm mt-1">Orden recomendado de trabajo según el tipo de desvinculación y el diagnóstico cargado.</p>
+          <div id="rutaGrid" class="grid md:grid-cols-2 gap-4 mt-6"></div>
+        </div>
+      </div>
+
+      <!-- TAB 4 -->
+      <div id="tab-documentacion" class="tab-panel hidden">
+        <div class="bg-e-white border border-e-silver rounded-4xl shadow-card p-6">
+          <span class="section-badge">Paso 4</span>
+          <h2 class="font-display text-2xl font-bold mt-3">Documentación crítica</h2>
+          <p class="text-e-dark text-sm mt-1">Checklist adaptado al tipo de caso, basado en la lógica documental y preventiva.</p>
+          <div id="docGrid" class="grid md:grid-cols-2 xl:grid-cols-3 gap-4 mt-6"></div>
+        </div>
+      </div>
+
+      <!-- TAB 5 -->
+      <div id="tab-economico" class="tab-panel hidden">
+        <div class="grid xl:grid-cols-2 gap-6">
+          <div class="bg-e-white border border-e-silver rounded-4xl shadow-card p-6">
+            <span class="section-badge">Paso 5</span>
+            <h2 class="font-display text-2xl font-bold mt-3">Estimación económica orientativa</h2>
+            <p class="text-e-dark text-sm mt-1">Se calculan los rubros según el tipo de caso y los parámetros configurados.</p>
+            <div class="grid md:grid-cols-2 gap-4 mt-6">
+              <label class="space-y-1.5"><span class="text-sm font-medium">Sueldo base</span><input id="eSueldo" type="number" step="0.01" value="0" class="w-full rounded-2xl border border-e-silver bg-e-cream px-4 py-3 text-sm"/></label>
+              <label class="space-y-1.5"><span class="text-sm font-medium">Promedio de variables</span><input id="eVariables" type="number" step="0.01" value="0" class="w-full rounded-2xl border border-e-silver bg-e-cream px-4 py-3 text-sm"/></label>
+              <label class="space-y-1.5"><span class="text-sm font-medium">Mejor remuneración</span><input id="eMejorRem" type="number" step="0.01" value="0" class="w-full rounded-2xl border border-e-silver bg-e-cream px-4 py-3 text-sm"/></label>
+              <label class="space-y-1.5"><span class="text-sm font-medium">Tope convenio</span><input id="eTope" type="number" step="0.01" value="0" class="w-full rounded-2xl border border-e-silver bg-e-cream px-4 py-3 text-sm"/></label>
+              <label class="space-y-1.5"><span class="text-sm font-medium">Días trabajados del mes</span><input id="eDiasMes" type="number" step="1" value="0" class="w-full rounded-2xl border border-e-silver bg-e-cream px-4 py-3 text-sm"/></label>
+              <label class="space-y-1.5"><span class="text-sm font-medium">Días de vacaciones pendientes</span><input id="eVacPend" type="number" step="1" value="0" class="w-full rounded-2xl border border-e-silver bg-e-cream px-4 py-3 text-sm"/></label>
+              <label class="space-y-1.5"><span class="text-sm font-medium">Días trabajados del semestre</span><input id="eDiasSem" type="number" step="1" value="0" class="w-full rounded-2xl border border-e-silver bg-e-cream px-4 py-3 text-sm"/></label>
+              <label class="space-y-1.5"><span class="text-sm font-medium">Monto gratificación / mutuo acuerdo</span><input id="eMutuo" type="number" step="0.01" value="0" class="w-full rounded-2xl border border-e-silver bg-e-cream px-4 py-3 text-sm"/></label>
+              <label class="space-y-1.5 md:col-span-2"><span class="text-sm font-medium">¿Preaviso no otorgado?</span>
+                <select id="ePreavisoNoOtorgado" class="w-full rounded-2xl border border-e-silver bg-e-cream px-4 py-3 text-sm">
+                  <option value="1">Sí — no se otorgó preaviso</option>
+                  <option value="0">No — el preaviso fue otorgado o no aplica</option>
+                </select></label>
+            </div>
+            <button id="btnCalcularEconomico" class="btn-navy rounded-2xl px-5 py-3 text-sm font-semibold flex items-center gap-2 mt-5">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+              Calcular rubros
+            </button>
+          </div>
+          <div class="bg-e-white border border-e-silver rounded-4xl shadow-card p-6">
+            <h3 class="font-display text-xl font-bold">Rubros del caso</h3>
+            <p class="text-e-dark text-sm mt-1">La salida cambia según el tipo de desvinculación y los parámetros activos.</p>
+            <div class="grid grid-cols-2 gap-4 mt-5">
+              <div class="rounded-2xl bg-e-cream border border-e-silver p-4">
+                <p class="text-xs uppercase tracking-wide font-ui" style="color:var(--silver)">Antigüedad computable</p>
+                <p id="ecoAntiguedad" class="font-display text-2xl font-bold mt-2">0 años</p>
+              </div>
+              <div class="rounded-2xl border-2 p-4" style="border-color:var(--cyan);background:#f0fcfd;">
+                <p class="text-xs uppercase tracking-wide font-ui" style="color:var(--blue);">Total estimado</p>
+                <p id="ecoTotal" class="font-display text-2xl font-bold mt-2">$ 0,00</p>
+              </div>
+            </div>
+            <div class="mt-5 rounded-2xl border border-e-silver overflow-hidden">
+              <table class="w-full eco-table"><tbody id="ecoBreakdown"></tbody></table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 6 -->
+      <div id="tab-riesgo" class="tab-panel hidden">
+        <div class="bg-e-white border border-e-silver rounded-4xl shadow-card p-6">
+          <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+            <div>
+              <span class="section-badge">Paso 6</span>
+              <h2 class="font-display text-2xl font-bold mt-3">Semáforo de riesgo</h2>
+              <p class="text-e-dark text-sm mt-1">Lectura orientativa basada en el diagnóstico y la documentación del caso.</p>
+            </div>
+            <div class="rounded-2xl border border-e-silver bg-e-cream px-5 py-4 text-center flex-shrink-0">
+              <p class="text-xs uppercase tracking-wide font-ui" style="color:var(--silver)">Nivel de exposición</p>
+              <div class="flex items-center justify-center gap-2 mt-2">
+                <span id="riskDotMain" class="risk-dot"></span>
+                <p id="riskLevel" class="font-display text-2xl font-bold">Pendiente</p>
+              </div>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+            <div class="rounded-3xl border border-e-silver p-5 bg-e-cream"><div class="flex items-center gap-2 mb-2"><span class="risk-dot dot-bajo"></span><p class="font-semibold text-sm">Bajo</p></div><p class="text-sm text-e-dark leading-6">Caso ordenado, baja sensibilidad y documentación suficiente.</p></div>
+            <div class="rounded-3xl border border-e-silver p-5 bg-e-cream"><div class="flex items-center gap-2 mb-2"><span class="risk-dot dot-medio"></span><p class="font-semibold text-sm">Medio</p></div><p class="text-sm text-e-dark leading-6">Hay puntos a revisar antes de comunicar, liquidar o negociar.</p></div>
+            <div class="rounded-3xl border border-e-silver p-5 bg-e-cream"><div class="flex items-center gap-2 mb-2"><span class="risk-dot dot-alto"></span><p class="font-semibold text-sm">Alto</p></div><p class="text-sm text-e-dark leading-6">Inconsistencias o faltantes relevantes que pueden escalar el conflicto.</p></div>
+            <div class="rounded-3xl border border-e-silver p-5 bg-e-cream"><div class="flex items-center gap-2 mb-2"><span class="risk-dot dot-critico"></span><p class="font-semibold text-sm">Crítico</p></div><p class="text-sm text-e-dark leading-6">No avanzar sin revisión integral del caso y del soporte disponible.</p></div>
+          </div>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="rounded-3xl border border-e-silver p-5 bg-e-cream">
+              <p class="text-xs uppercase tracking-wider font-ui mb-3" style="color:var(--silver)">Factores de exposición</p>
+              <ul id="riskFactors" class="space-y-2 text-sm"></ul>
+            </div>
+            <div class="rounded-3xl border border-e-silver p-5 bg-e-cream">
+              <p class="text-xs uppercase tracking-wider font-ui mb-3" style="color:var(--silver)">Lectura orientativa</p>
+              <p id="riskText" class="text-sm text-e-dark leading-6">Completá el diagnóstico para obtener una lectura de exposición.</p>
+              <div class="mt-4 score-track"><div id="riskScoreBar" class="score-fill" style="width:0%"></div></div>
+              <p id="riskScoreLabel" class="text-xs text-e-dark mt-1.5">Score: 0 puntos</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 7 -->
+      <div id="tab-estrategia" class="tab-panel hidden">
+        <div class="bg-e-white border border-e-silver rounded-4xl shadow-card p-6">
+          <span class="section-badge">Paso 7</span>
+          <h2 class="font-display text-2xl font-bold mt-3">Estrategia sugerida</h2>
+          <p class="text-e-dark text-sm mt-1">Próximos pasos recomendados según el tipo de caso, el diagnóstico y el nivel de exposición.</p>
+          <div id="strategyGrid" class="grid md:grid-cols-2 gap-4 mt-6"></div>
+        </div>
+      </div>
+
+      <!-- TAB 8 -->
+      <div id="tab-informe" class="tab-panel hidden">
+        <div class="bg-e-white border border-e-silver rounded-4xl shadow-card p-6">
+          <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+            <div>
+              <span class="section-badge">Paso 8</span>
+              <h2 class="font-display text-2xl font-bold mt-3">Informe final del caso</h2>
+              <p class="text-e-dark text-sm mt-1">Síntesis completa del caso lista para copiar o exportar como PDF.</p>
+            </div>
+            <div class="flex flex-wrap gap-3 flex-shrink-0">
+              <button id="btnExportarPDF" class="btn-lime rounded-2xl px-5 py-3 text-sm flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                Exportar PDF
+              </button>
+              <button id="btnCopiarInforme" class="btn-ghost rounded-2xl px-5 py-3 text-sm font-medium flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                Copiar texto
+              </button>
+            </div>
+          </div>
+          <div class="grid md:grid-cols-2 gap-4 mb-6">
+            <div class="rounded-3xl border border-e-silver p-5 bg-e-cream"><p class="text-xs uppercase tracking-wider font-ui mb-3" style="color:var(--silver)">Identificación</p><div id="reportIdent" class="text-sm space-y-2"></div></div>
+            <div class="rounded-3xl border border-e-silver p-5 bg-e-cream"><p class="text-xs uppercase tracking-wider font-ui mb-3" style="color:var(--silver)">Diagnóstico</p><div id="reportDiag" class="text-sm space-y-2"></div></div>
+            <div class="rounded-3xl border border-e-silver p-5 bg-e-cream"><p class="text-xs uppercase tracking-wider font-ui mb-3" style="color:var(--silver)">Rubros económicos</p><div id="reportEco" class="text-sm space-y-2"></div></div>
+            <div class="rounded-3xl border border-e-silver p-5 bg-e-cream"><p class="text-xs uppercase tracking-wider font-ui mb-3" style="color:var(--silver)">Alertas y recomendación</p><div id="reportAlerts" class="text-sm space-y-2"></div></div>
+          </div>
+          <label class="block space-y-1.5">
+            <span class="text-sm font-medium text-e-dark">Texto plano para copiar</span>
+            <textarea id="reportText" rows="14" class="w-full rounded-2xl border border-e-silver bg-e-cream px-4 py-3 text-sm font-mono resize-none" readonly></textarea>
+          </label>
+        </div>
+      </div>
+
+      <!-- TAB PARÁMETROS -->
+      <div id="tab-parametros" class="tab-panel hidden">
+        <div class="bg-e-white border border-e-silver rounded-4xl shadow-card p-6">
+
+          <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
+            <div>
+              <span class="section-badge">Configuración</span>
+              <h2 class="font-display text-2xl font-bold mt-3">Parámetros de cálculo</h2>
+              <p class="text-e-dark text-sm mt-1 max-w-xl">
+                Todos los valores que intervienen en la estimación económica. Actualizalos ante decretos, normalizaciones,
+                cambios de índice (RIPTE), nuevos porcentajes o condiciones específicas del caso.
+                Los cambios se guardan automáticamente en este equipo.
+              </p>
+            </div>
+            <button id="btnClearCache" class="btn-danger rounded-2xl px-4 py-2.5 text-sm flex items-center gap-2 flex-shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              Borrar datos y restablecer predeterminados
+            </button>
+          </div>
+
+          <!-- Grupo: Base de cálculo -->
+          <div class="mb-7">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="h-0.5 w-4 rounded" style="background:var(--cyan)"></div>
+              <p class="text-xs font-bold uppercase tracking-widest text-e-dark">Base de cálculo y divisores</p>
+              <div class="h-0.5 flex-1 bg-e-silver"></div>
+            </div>
+            <div id="paramsBase" class="grid md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+          </div>
+
+          <!-- Grupo: Preaviso -->
+          <div class="mb-7">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="h-0.5 w-4 rounded" style="background:var(--cyan)"></div>
+              <p class="text-xs font-bold uppercase tracking-widest text-e-dark">Preaviso</p>
+              <div class="h-0.5 flex-1 bg-e-silver"></div>
+            </div>
+            <div id="paramsPreaviso" class="grid md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+          </div>
+
+          <!-- Grupo: Indemnización y coeficientes -->
+          <div class="mb-7">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="h-0.5 w-4 rounded" style="background:var(--cyan)"></div>
+              <p class="text-xs font-bold uppercase tracking-widest text-e-dark">Indemnización y coeficientes normativos</p>
+              <div class="h-0.5 flex-1 bg-e-silver"></div>
+            </div>
+            <div id="paramsIndem" class="grid md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+          </div>
+
+          <!-- Grupo: Multas -->
+          <div class="mb-7">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="h-0.5 w-4 rounded" style="background:var(--lime)"></div>
+              <p class="text-xs font-bold uppercase tracking-widest text-e-dark">Multas y agravantes</p>
+              <div class="h-0.5 flex-1 bg-e-silver"></div>
+            </div>
+            <div id="paramsMultas" class="grid md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+          </div>
+
+          <!-- Grupo: Intereses orientativos -->
+          <div class="mb-7">
+            <div class="flex items-center gap-3 mb-4">
+              <div class="h-0.5 w-4 rounded" style="background:var(--olive)"></div>
+              <p class="text-xs font-bold uppercase tracking-widest text-e-dark">Intereses orientativos</p>
+              <div class="h-0.5 flex-1 bg-e-silver"></div>
+            </div>
+            <div id="paramsIntereses" class="grid md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+          </div>
+
+          <!-- Resumen activos -->
+          <div class="rounded-3xl border-2 p-5" style="border-color:var(--cyan);background:#f0fcfd;">
+            <p class="text-xs uppercase tracking-wider font-ui mb-3" style="color:var(--blue)">Parámetros modificados respecto a valores por defecto</p>
+            <div id="paramsResumenItems" class="flex flex-wrap gap-2"></div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-e-navy mt-11">
+  <div class="accent-line"></div>
+  <div class="max-w-screen-xl mx-auto px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
+    <img src="img/escencial-logoblanco.png" alt="Escencial by ONE" class="h-9 w-auto"
+         onerror="this.src='img/logo-escencial.png';this.style.filter='brightness(0) invert(1)';this.onerror=null;">
+    <p class="text-e-silver text-xs text-center">Kit Online de Desvinculación Laboral · Herramienta de Escencial</p>
+    <img src="img/one-iconocolor.png" alt="ONE" class="h-7 w-auto opacity-60"
+         onerror="this.style.display='none'">
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
